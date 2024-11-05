@@ -8,18 +8,48 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css"
     />
+    <style>
+      /* 将按钮固定在右上角 */
+      .top-right-buttons {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 右上角按钮组 -->
+    <div class="top-right-buttons">
+      <button
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#loginModal"
+      >
+        登录
+      </button>
+      <button
+        class="btn btn-secondary"
+        data-bs-toggle="modal"
+        data-bs-target="#registerModal"
+      >
+        注册
+      </button>
+      <button
+        class="btn btn-info"
+        data-bs-toggle="modal"
+        data-bs-target="#aboutModal"
+      >
+        关于
+      </button>
+    </div>
   </head>
   <body>
     <div class="container mt-5">
       <h1 class="text-center">报告生成器</h1>
       <div class="d-flex justify-content-end">
-        <button
-          class="btn btn-info"
-          data-bs-toggle="modal"
-          data-bs-target="#aboutModal"
-        >
-          关于
-        </button>
+        
       </div>
 
       <!-- 表单 -->
@@ -130,6 +160,108 @@
         </div>
       </div>
     </div>
+    
+
+    <!-- 登录模态框 -->
+    <div
+      class="modal fade"
+      id="loginModal"
+      tabindex="-1"
+      aria-labelledby="loginModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">登录</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="loginForm">
+              <div class="mb-3">
+                <label for="loginUsername" class="form-label">用户名</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="loginUsername"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="loginPassword" class="form-label">密码</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="loginPassword"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary">登录</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div
+      class="modal fade"
+      id="registerModal"
+      tabindex="-1"
+      aria-labelledby="registerModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="registerModalLabel">注册</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="registerForm">
+              <div class="mb-3">
+                <label for="registerUsername" class="form-label">用户名</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="registerUsername"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="registerPassword" class="form-label">密码</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="registerPassword"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="registerEmail" class="form-label">邮箱</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="registerEmail"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-secondary">注册</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -196,6 +328,55 @@
           statusText.textContent = "报告生成完成。";
         }
       }
+      // 登录表单提交事件
+document.getElementById("loginForm").onsubmit = async function (event) {
+    event.preventDefault(); // 阻止默认表单提交
+
+    const username = document.getElementById("loginUsername").value;
+    const password = document.getElementById("loginPassword").value;
+
+    const response = await fetch("/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+    });
+    const result = await response.json();
+
+    if (result.status === "success") {
+        alert("登录成功");
+        // 可以重定向或执行其他操作，比如关闭模态框
+    } else {
+        alert("登录失败: " + result.message);
+    }
+};
+
+// 注册表单提交事件
+document.getElementById("registerForm").onsubmit = async function (event) {
+    event.preventDefault(); // 阻止默认表单提交
+
+    const username = document.getElementById("registerUsername").value;
+    const password = document.getElementById("registerPassword").value;
+    const email = document.getElementById("registerEmail").value;
+
+    const response = await fetch("/register", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password, email })
+    });
+    const result = await response.json();
+
+    if (result.status === "success") {
+        alert("注册成功");
+        // 可以重定向或执行其他操作，比如关闭模态框
+    } else {
+        alert("注册失败: " + result.message);
+    }
+};
+
     </script>
   </body>
 </html>

@@ -4,12 +4,16 @@ import logging
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, session
 from werkzeug.utils import secure_filename
 from data_processing import run_report_generation
+from models import db, User  # 引入数据库和用户模型
 
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Set a secret key for session management
 app.config['UPLOAD_FOLDER'] = 'uploads'  # Directory for file uploads
 app.config['GENERATED_REPORTS'] = 'generated_reports'  # Directory for generated reports
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user.db'  # 设置数据库路径
+db.init_app(app)  # 初始化数据库
+
 
 # Ensure the upload and report folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -92,6 +96,46 @@ def download_report(session_id):
         logging.error("File not found at the specified path: %s", report_path)
         return "File not found", 404
 
-# Run the app
-if __name__ == '__main__':
+
+
+# 注册路由
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+
+    # 检查用户名和邮箱是否已存在
+    if User.query.filter_by(username=username).first():
+        return jsonify({"status": "fail", "message": "用户名已存在"}), 400
+    if User.query.filter_by(email=email).first():
+        return jsonify({"status": "fail", "message": "邮箱已被注册"}), 400
+
+    # 创建用户并加密密码
+    new_user = User(username=username, email=email)
+    new_user.set_password(password)  # 加密密码
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "注册成功"}), 201
+
+# 登录路由
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # 查询用户
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        session['user_id'] = user.id  # 将用户ID存入session
+        return jsonify({"status": "success", "message": "登录成功"}), 200
+    else:
+        return jsonify({"status": "fail", "message": "用户名或密码错误"}), 401
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()  # 创建数据库表
     app.run(debug=True)
