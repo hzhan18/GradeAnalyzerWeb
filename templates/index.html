@@ -155,8 +155,8 @@
         const statusText = document.getElementById("statusText");
 
         // 显示进度条
-        progressContainer.style.display = "block";
-        statusText.textContent = "生成报告中...";
+        /* progressContainer.style.display = "block";*/
+        statusText.textContent = "报告生成大概需要30至60秒即可下载...";
 
         // 发送请求到后端
         const response = await fetch("{{ url_for('process_file') }}", {
