@@ -182,7 +182,8 @@ def generate_word_report(
     course_name,
     total_students,
     class_name1,
-    class_name2=None  # Set default value to None
+    class_name2=None,  # Set default value to None
+    report_style="formal"
 ):
     # Initialize session progress tracking
     ##session[session_id]["progress"] = 80  # Assuming previous steps covered up to 80%
@@ -487,13 +488,14 @@ def generate_word_report(
             distribution_description += f"{range_key}: 人数 {values['人数']}, 占比 {values['占比']:.2f}%；"
 
         analysis_content = (
+            f"请用 '{report_style}' 语言风格撰写报告分析。"
             f"你作为这门课的授课老师，正在写校方布置的课程总结报告，对该门课学生{score_type}的成绩做出简要的书面总结和分析(除非学生成绩数据比较特殊，否则请不要过多的展示各分数段的总结和过分的罗列数值，而是稍微宏观一些做出总结)。"
             f"以下为学生的成绩数据: 总人数为{stats['总人数']}，最高分为{stats['最高分']}，最低分为{stats['最低分']}，平均分为{stats['平均分']}。"
             f"各分数段的分布情况如下：{distribution_description}"
             "备注：生成的内容中要大幅减少转接词的使用（例如首先、其次、最后、综上所述、总的来说、此外、值得XX的是、XXXX的是）。"
             "同时要保证生成的内容通俗易懂，不晦涩，不要用太书面化的词语。将内容控制在500字以内。"
         )
-        ai_result = call_with_messages(analysis_content)
+        ai_result = call_with_messages(analysis_content, report_style)
 
         # 添加分析结果
         analysis_heading = doc.add_paragraph()

@@ -47,12 +47,15 @@ def process_file():
     class_name1 = request.form.get('class_name1', '')
     class_name2 = request.form.get('class_name2', '')
 
+    # 从 session 中获取用户选择的报告风格
+    report_style = session.get('report_style', 'formal')  # 默认为 'formal'
+
     # Generate a session ID to track progress
     session_id = os.urandom(8).hex()
     session[session_id] = {"progress": 0, "status": "Initializing"}
 
-    # Run the report generation process
-    result = run_report_generation(file_path, class_name1, class_name2, session_id)
+    # Run the report generation process, passing the report_style
+    result = run_report_generation(file_path, class_name1, class_name2, session_id, report_style=report_style)
 
     # Error handling
     if result["status"] == "error":
@@ -73,6 +76,7 @@ def process_file():
         return jsonify({"status": "error", "message": "Report generation failed"}), 500
 
     return jsonify({"status": "success", "session_id": session_id})
+
 
 # Check progress of report generation
 @app.route('/progress/<session_id>')

@@ -355,6 +355,9 @@
       // 表单提交事件 (使用AJAX)
       document.getElementById("reportForm").onsubmit = async function (event) {
         event.preventDefault(); // 阻止默认表单提交
+        // 隐藏“报告生成完成”和下载按钮部分
+        document.getElementById("download-section").style.display = "none";
+        document.getElementById("statusText").textContent = "等待中...";
 
         const formData = new FormData(this);
         const progressBar = document.getElementById("progressBar");
@@ -403,6 +406,7 @@
           statusText.textContent = "报告生成完成。";
         }
       }
+
       document.getElementById("loginForm").onsubmit = async function (event) {
         event.preventDefault();
 

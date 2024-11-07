@@ -70,7 +70,7 @@ def calculate_statistics(df, column):
     
     return stats, distribution_text, distribution_plot
 
-def run_report_generation(file_path, class_name1, class_name2, session_id):
+def run_report_generation(file_path, class_name1, class_name2, session_id, report_style="formal"):
     if not os.path.exists(file_path):
         return {"status": "error", "message": "文件不存在，请检查文件名和路径。"}
 
@@ -158,7 +158,8 @@ def run_report_generation(file_path, class_name1, class_name2, session_id):
         course_name,
         total_students,
         class_name1,
-        class_name2
+        class_name2,
+        report_style=report_style
     )
 
     session[session_id]["progress"] = 100
