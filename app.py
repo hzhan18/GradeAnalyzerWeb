@@ -132,6 +132,7 @@ def login():
         session['user_id'] = user.id  # 将用户ID存入session
         session['username'] = user.username
         session['email'] = user.email
+        session['logged_in'] = True  # 标记用户已登录
         # 返回 JSON 响应，不跳转页面
         return jsonify({"status": "success", "username": user.username, "email": user.email})
     else:
@@ -140,25 +141,34 @@ def login():
 @app.route('/save_style', methods=['POST'])
 def save_style():
     if 'user_id' not in session:
+        logging.warning("用户未登录，无法保存报告风格")
         return jsonify({"status": "fail", "message": "用户未登录"}), 401
 
     data = request.get_json()
     report_style = data.get('report_style')
+    logging.info(f"接收到的报告风格: {report_style}")
 
     user = User.query.get(session['user_id'])
     if user:
         user.report_style = report_style  # 保存报告风格
         db.session.commit()
+        logging.info(f"报告风格已更新为: {user.report_style}")
         return jsonify({"status": "success", "message": "报告风格已保存"})
     else:
+        logging.error("用户不存在，无法保存报告风格")
         return jsonify({"status": "fail", "message": "用户不存在"}), 404
 
+@app.route('/check_login')
+def check_login():
+    return jsonify({"logged_in": session.get('logged_in', False)})
 
-# 登出路由
+
+
 @app.route('/logout')
 def logout():
-    session.clear() 
+    session.clear()  # 清除所有session数据
     return redirect(url_for('index'))
+
 
 
 if __name__ == "__main__":

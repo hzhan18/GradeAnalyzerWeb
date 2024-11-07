@@ -77,6 +77,41 @@
             name="class_name2"
           />
         </div>
+        <!-- 个人信息模态框 -->
+        <div
+          class="modal fade"
+          id="userInfoModal"
+          tabindex="-1"
+          aria-labelledby="userInfoModalLabel"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="userInfoModalLabel">个人信息</h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <h5 id="userWelcome"></h5>
+                <p id="userEmail"></p>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  关闭
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- 文件选择 -->
         <div class="mb-3">
@@ -92,6 +127,23 @@
           <div id="fileHelp" class="form-text">
             请上传Excel文件 (格式: .xlsx)。
           </div>
+        </div>
+        <!-- 添加文本风格选择 -->
+        <div class="mb-3">
+          <label for="reportStyle" class="form-label">选择报告文本风格</label>
+          <select
+            id="reportStyle"
+            name="reportStyle"
+            class="form-select"
+            disabled
+          >
+            <option value="formal">正式</option>
+            <option value="concise">简洁</option>
+            <option value="detailed">详细</option>
+          </select>
+          <small id="loginPrompt" class="form-text text-muted"
+            >请先登录以使用此功能</small
+          >
         </div>
 
         <!-- 生成报告按钮 -->
@@ -352,7 +404,7 @@
         }
       }
       document.getElementById("loginForm").onsubmit = async function (event) {
-        event.preventDefault(); // 阻止默认表单提交
+        event.preventDefault();
 
         const username = document.getElementById("loginUsername").value;
         const password = document.getElementById("loginPassword").value;
@@ -367,60 +419,39 @@
 
         const result = await response.json();
 
-        // 登录成功后更改模态框内容
         if (result.status === "success") {
-          alert("登录成功");
+          alert("登录成功, 欢迎" + result.username);
 
-          // 替换模态框内容为欢迎信息
-          const modalBody = document.querySelector("#loginModal .modal-body");
-          modalBody.innerHTML = `
-            <h5>欢迎, ${result.username}!</h5>
-            <p>邮箱: ${result.email}</p>
-            <!-- 添加文本风格选择 -->
-            <div class="mb-3">
-              <label for="reportStyle" class="form-label">选择报告文本风格</label>
-              <select id="reportStyle" class="form-select">
-                <option value="formal">正式</option>
-                <option value="concise">简洁</option>
-                <option value="detailed">详细</option>
-              </select>
-            </div>
+          // 启用文本风格选择器并隐藏提示信息
+          const reportStyleSelect = document.getElementById("reportStyle");
+          const loginPrompt = document.getElementById("loginPrompt");
+          reportStyleSelect.disabled = false;
+          loginPrompt.style.display = "none";
 
-            <button id="saveStyleButton" class="btn btn-primary">保存风格</button>
-            <button id="logoutButton" class="btn btn-danger">登出</button>
-        `;
+          // 更新按钮文本
+          const loginButton =
+            document.getElementById("loginButtons").children[0];
+          loginButton.textContent = "个人";
+          loginButton.dataset.bsTarget = "#userInfoModal"; // 设置为个人信息模态框
 
-          // 绑定登出按钮的点击事件
-          document
-            .getElementById("logoutButton")
-            .addEventListener("click", logout);
+          const registerButton =
+            document.getElementById("loginButtons").children[1];
+          registerButton.textContent = "登出";
+          registerButton.style.display = "inline-block";
+          registerButton.addEventListener("click", logout);
 
-          // 绑定保存风格按钮的点击事件
-          document.getElementById("saveStyleButton").onclick =
-            async function () {
-              const reportStyle = document.getElementById("reportStyle").value;
+          // 填充个人信息模态框的内容
+          document.getElementById(
+            "userWelcome"
+          ).textContent = `欢迎, ${result.username}!`;
+          document.getElementById(
+            "userEmail"
+          ).textContent = `邮箱: ${result.email}`;
 
-              const saveResponse = await fetch("/save_style", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ report_style: reportStyle }),
-              });
-
-              const result = await saveResponse.json();
-              alert(result.message); // 显示确认保存的消息
-            };
-
-          // 逐渐使模态框透明
-          const loginModalContent = document.querySelector(
-            "#loginModal .modal-content"
-          );
-          loginModalContent.style.transition = "opacity 1s";
-          loginModalContent.style.opacity = 0.7; // 设置透明度，用户可隐约看到背景内容
-
-          // 隐藏登录和注册按钮
-          document.getElementById("loginButtons").style.display = "none";
+          // 使用Bootstrap的模态框方法关闭登录模态框
+          const loginModal = document.getElementById("loginModal");
+          const modalInstance = bootstrap.Modal.getInstance(loginModal);
+          modalInstance.hide(); // 关闭模态框
         } else {
           alert("登录失败: " + result.message);
         }
@@ -452,11 +483,79 @@
           alert("注册失败: " + result.message);
         }
       };
+      document.addEventListener("DOMContentLoaded", async function () {
+        const reportStyleSelect = document.getElementById("reportStyle");
+        const loginPrompt = document.getElementById("loginPrompt");
+
+        // 检查登录状态
+        const response = await fetch("/check_login");
+        const result = await response.json();
+        console.log("User logged in:", result.logged_in); // 添加日志输出
+
+        if (result.logged_in) {
+          // 用户已登录，启用文本风格选择器并隐藏提示
+          reportStyleSelect.disabled = false;
+          loginPrompt.style.display = "none";
+        } else {
+          // 用户未登录，禁用文本风格选择器并显示提示
+          reportStyleSelect.disabled = true;
+          loginPrompt.style.display = "block";
+        }
+      });
+      // 文本风格选择事件
+      document
+        .getElementById("reportStyle")
+        .addEventListener("change", async function () {
+          const selectedStyle = this.value;
+
+          // 显示提示消息
+          const loginPrompt = document.getElementById("loginPrompt");
+          loginPrompt.style.display = "block";
+          loginPrompt.textContent = `报告风格 "${selectedStyle}" 已储存。`;
+
+          // 向后台发送请求保存选择的风格
+          try {
+            const response = await fetch("/save_style", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ report_style: selectedStyle }), // 使用 report_style 与后端保持一致
+            });
+
+            const result = await response.json();
+            console.log("服务器响应:", result); // 检查服务器响应
+
+            if (result.status === "success") {
+              // 2秒后隐藏提示消息
+              setTimeout(() => {
+                loginPrompt.style.display = "none";
+              }, 2000);
+            } else {
+              alert("保存报告风格失败，请稍后重试。");
+            }
+          } catch (error) {
+            console.error("请求失败:", error); // 输出请求错误信息
+            alert("保存报告风格失败，请检查网络连接或稍后重试。");
+          }
+        });
+
       // 登出函数
       async function logout() {
         const response = await fetch("/logout", { method: "GET" });
         if (response.redirected) {
-          window.location.href = response.url; // 重定向到首页
+          window.location.href = response.url;
+        } else {
+          const loginButton =
+            document.getElementById("loginButtons").children[0];
+          loginButton.textContent = "登录";
+          loginButton.dataset.bsTarget = "#loginModal"; // 恢复登录模态框
+
+          const registerButton =
+            document.getElementById("loginButtons").children[1];
+          registerButton.textContent = "注册";
+          registerButton.style.display = "inline-block";
+          registerButton.removeEventListener("click", logout);
         }
       }
     </script>

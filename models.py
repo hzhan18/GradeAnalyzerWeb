@@ -9,7 +9,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    report_style = db.Column(db.String(50), nullable=True)  # 添加 report_style 字段
+    report_style = db.Column(db.String(50), nullable=True)  # 报告风格
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
