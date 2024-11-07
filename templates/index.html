@@ -17,6 +17,10 @@
         display: flex;
         gap: 10px;
       }
+      /* 添加模态框的透明过渡效果 */
+      #loginModal .modal-content {
+        transition: opacity 1s ease-in-out;
+      }
     </style>
   </head>
   <body>
@@ -44,13 +48,10 @@
         关于
       </button>
     </div>
-  </head>
-  <body>
+
     <div class="container mt-5">
       <h1 class="text-center">报告生成器</h1>
-      <div class="d-flex justify-content-end">
-        
-      </div>
+      <div class="d-flex justify-content-end"></div>
 
       <!-- 表单 -->
       <form id="reportForm" method="POST" enctype="multipart/form-data">
@@ -160,7 +161,6 @@
         </div>
       </div>
     </div>
-    
 
     <!-- 登录模态框 -->
     <div
@@ -201,13 +201,36 @@
                   required
                 />
               </div>
+
               <button type="submit" class="btn btn-primary">登录</button>
             </form>
           </div>
         </div>
       </div>
     </div>
-
+    <div id="loginButtons" class="top-right-buttons">
+      <button
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#loginModal"
+      >
+        登录
+      </button>
+      <button
+        class="btn btn-secondary"
+        data-bs-toggle="modal"
+        data-bs-target="#registerModal"
+      >
+        注册
+      </button>
+      <button
+        class="btn btn-info"
+        data-bs-toggle="modal"
+        data-bs-target="#aboutModal"
+      >
+        关于
+      </button>
+    </div>
     <!-- 注册模态框 -->
     <div
       class="modal fade"
@@ -328,55 +351,114 @@
           statusText.textContent = "报告生成完成。";
         }
       }
-      // 登录表单提交事件
-document.getElementById("loginForm").onsubmit = async function (event) {
-    event.preventDefault(); // 阻止默认表单提交
+      document.getElementById("loginForm").onsubmit = async function (event) {
+        event.preventDefault(); // 阻止默认表单提交
 
-    const username = document.getElementById("loginUsername").value;
-    const password = document.getElementById("loginPassword").value;
+        const username = document.getElementById("loginUsername").value;
+        const password = document.getElementById("loginPassword").value;
 
-    const response = await fetch("/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username, password })
-    });
-    const result = await response.json();
+        const response = await fetch("/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
 
-    if (result.status === "success") {
-        alert("登录成功");
-        // 可以重定向或执行其他操作，比如关闭模态框
-    } else {
-        alert("登录失败: " + result.message);
-    }
-};
+        const result = await response.json();
 
-// 注册表单提交事件
-document.getElementById("registerForm").onsubmit = async function (event) {
-    event.preventDefault(); // 阻止默认表单提交
+        // 登录成功后更改模态框内容
+        if (result.status === "success") {
+          alert("登录成功");
 
-    const username = document.getElementById("registerUsername").value;
-    const password = document.getElementById("registerPassword").value;
-    const email = document.getElementById("registerEmail").value;
+          // 替换模态框内容为欢迎信息
+          const modalBody = document.querySelector("#loginModal .modal-body");
+          modalBody.innerHTML = `
+            <h5>欢迎, ${result.username}!</h5>
+            <p>邮箱: ${result.email}</p>
+            <!-- 添加文本风格选择 -->
+            <div class="mb-3">
+              <label for="reportStyle" class="form-label">选择报告文本风格</label>
+              <select id="reportStyle" class="form-select">
+                <option value="formal">正式</option>
+                <option value="concise">简洁</option>
+                <option value="detailed">详细</option>
+              </select>
+            </div>
 
-    const response = await fetch("/register", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username, password, email })
-    });
-    const result = await response.json();
+            <button id="saveStyleButton" class="btn btn-primary">保存风格</button>
+            <button id="logoutButton" class="btn btn-danger">登出</button>
+        `;
 
-    if (result.status === "success") {
-        alert("注册成功");
-        // 可以重定向或执行其他操作，比如关闭模态框
-    } else {
-        alert("注册失败: " + result.message);
-    }
-};
+          // 绑定登出按钮的点击事件
+          document
+            .getElementById("logoutButton")
+            .addEventListener("click", logout);
 
+          // 绑定保存风格按钮的点击事件
+          document.getElementById("saveStyleButton").onclick =
+            async function () {
+              const reportStyle = document.getElementById("reportStyle").value;
+
+              const saveResponse = await fetch("/save_style", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ report_style: reportStyle }),
+              });
+
+              const result = await saveResponse.json();
+              alert(result.message); // 显示确认保存的消息
+            };
+
+          // 逐渐使模态框透明
+          const loginModalContent = document.querySelector(
+            "#loginModal .modal-content"
+          );
+          loginModalContent.style.transition = "opacity 1s";
+          loginModalContent.style.opacity = 0.7; // 设置透明度，用户可隐约看到背景内容
+
+          // 隐藏登录和注册按钮
+          document.getElementById("loginButtons").style.display = "none";
+        } else {
+          alert("登录失败: " + result.message);
+        }
+      };
+
+      // 注册表单提交事件
+      document.getElementById("registerForm").onsubmit = async function (
+        event
+      ) {
+        event.preventDefault(); // 阻止默认表单提交
+
+        const username = document.getElementById("registerUsername").value;
+        const password = document.getElementById("registerPassword").value;
+        const email = document.getElementById("registerEmail").value;
+
+        const response = await fetch("/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password, email }),
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+          alert("注册成功");
+          // 可以重定向或执行其他操作，比如关闭模态框
+        } else {
+          alert("注册失败: " + result.message);
+        }
+      };
+      // 登出函数
+      async function logout() {
+        const response = await fetch("/logout", { method: "GET" });
+        if (response.redirected) {
+          window.location.href = response.url; // 重定向到首页
+        }
+      }
     </script>
   </body>
 </html>

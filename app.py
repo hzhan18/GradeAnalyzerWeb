@@ -119,8 +119,7 @@ def register():
     db.session.commit()
 
     return jsonify({"status": "success", "message": "注册成功"}), 201
-
-# 登录路由
+#登陆路由
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -131,9 +130,36 @@ def login():
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
         session['user_id'] = user.id  # 将用户ID存入session
-        return jsonify({"status": "success", "message": "登录成功"}), 200
+        session['username'] = user.username
+        session['email'] = user.email
+        # 返回 JSON 响应，不跳转页面
+        return jsonify({"status": "success", "username": user.username, "email": user.email})
     else:
         return jsonify({"status": "fail", "message": "用户名或密码错误"}), 401
+
+@app.route('/save_style', methods=['POST'])
+def save_style():
+    if 'user_id' not in session:
+        return jsonify({"status": "fail", "message": "用户未登录"}), 401
+
+    data = request.get_json()
+    report_style = data.get('report_style')
+
+    user = User.query.get(session['user_id'])
+    if user:
+        user.report_style = report_style  # 保存报告风格
+        db.session.commit()
+        return jsonify({"status": "success", "message": "报告风格已保存"})
+    else:
+        return jsonify({"status": "fail", "message": "用户不存在"}), 404
+
+
+# 登出路由
+@app.route('/logout')
+def logout():
+    session.clear() 
+    return redirect(url_for('index'))
+
 
 if __name__ == "__main__":
     with app.app_context():
