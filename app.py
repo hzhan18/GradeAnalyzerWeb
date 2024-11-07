@@ -97,8 +97,6 @@ def download_report(session_id):
         return "File not found", 404
 
 
-
-# 注册路由
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -118,7 +116,14 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"status": "success", "message": "注册成功"}), 201
+    # 注册成功后自动登录
+    session['user_id'] = new_user.id
+    session['username'] = new_user.username
+    session['email'] = new_user.email
+    session['logged_in'] = True
+
+    return jsonify({"status": "success", "message": "注册成功并已自动登录", "username": new_user.username, "email": new_user.email}), 201
+
 #登陆路由
 @app.route('/login', methods=['POST'])
 def login():
