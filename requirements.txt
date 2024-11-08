@@ -71,3 +71,4 @@ websocket-client==1.8.0
 Werkzeug==3.0.1
 yarl==1.17.1
 zipp==3.17.0
+six==1.15.0
