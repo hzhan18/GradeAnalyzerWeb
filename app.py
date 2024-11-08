@@ -11,7 +11,8 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Set a secret key for session management
 app.config['UPLOAD_FOLDER'] = 'uploads'  # Directory for file uploads
 app.config['GENERATED_REPORTS'] = 'generated_reports'  # Directory for generated reports
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user.db'  # 设置数据库路径
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///tmp/user.db')
+
 db.init_app(app)  # 初始化数据库
 
 
@@ -183,4 +184,4 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # 创建数据库表
-    app.run(debug=True)
+    app.run(debug=True) 
