@@ -36,11 +36,12 @@ def make_celery(app):
 
 # Update the Celery configuration in app.py
 app.config.update(
-    CELERY_BROKER_URL=os.getenv("REDISCLOUD_URL"),
-    CELERY_RESULT_BACKEND=os.getenv("REDISCLOUD_URL")
+    broker_url=os.getenv("REDISCLOUD_URL"),
+    result_backend=os.getenv("REDISCLOUD_URL")
 )
 
 celery = make_celery(app)
+
 
 db.init_app(app)
 
