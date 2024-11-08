@@ -25,16 +25,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 def make_celery(app):
     celery = Celery(
         app.import_name,
-        backend=os.getenv("REDIS_URL"),
-        broker=os.getenv("REDIS_URL")
+        backend=os.getenv("REDISCLOUD_URL"),
+        broker=os.getenv("REDISCLOUD_URL")
     )
     celery.conf.update(app.config)
     return celery
 
+# Update the Celery configuration in app.py
 app.config.update(
-    CELERY_BROKER_URL=os.getenv("REDIS_URL"),
-    CELERY_RESULT_BACKEND=os.getenv("REDIS_URL")
+    CELERY_BROKER_URL=os.getenv("REDISCLOUD_URL"),
+    CELERY_RESULT_BACKEND=os.getenv("REDISCLOUD_URL")
 )
+
 celery = make_celery(app)
 
 db.init_app(app)
