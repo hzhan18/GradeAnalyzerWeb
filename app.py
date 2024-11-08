@@ -4,14 +4,15 @@ import logging
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, session
 from werkzeug.utils import secure_filename
 from data_processing import run_report_generation
-from models import db, User  # 引入数据库和用户模型
+from models import db, User
 from flask_sqlalchemy import SQLAlchemy
+from celery import Celery
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Set a secret key for session management
-app.config['UPLOAD_FOLDER'] = 'uploads'  # Directory for file uploads
-app.config['GENERATED_REPORTS'] = 'generated_reports'  # Directory for generated reports
+app.secret_key = 'your_secret_key'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['GENERATED_REPORTS'] = 'generated_reports'
 
 # Configure SQLAlchemy with PostgreSQL
 uri = os.getenv('DATABASE_URL')
@@ -20,7 +21,23 @@ if uri and uri.startswith("postgres://"):
 app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db.init_app(app)  # 初始化数据库
+# Initialize Celery
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        backend=os.getenv("REDIS_URL"),
+        broker=os.getenv("REDIS_URL")
+    )
+    celery.conf.update(app.config)
+    return celery
+
+app.config.update(
+    CELERY_BROKER_URL=os.getenv("REDIS_URL"),
+    CELERY_RESULT_BACKEND=os.getenv("REDIS_URL")
+)
+celery = make_celery(app)
+
+db.init_app(app)
 
 # Ensure the upload and report folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -32,7 +49,11 @@ logging.basicConfig(level=logging.INFO)
 # Home route (for file upload form)
 @app.route('/')
 def index():
-    return render_template('index.html')  # Render the home page template
+    return render_template('index.html')
+
+@celery.task
+def generate_report_task(file_path, class_name1, class_name2, session_id, report_style):
+    return run_report_generation(file_path, class_name1, class_name2, session_id, report_style)
 
 # Process file upload and report generation
 @app.route('/process', methods=['POST'])
@@ -55,32 +76,26 @@ def process_file():
     session_id = os.urandom(8).hex()
     session[session_id] = {"progress": 0, "status": "Initializing"}
 
-    result = run_report_generation(file_path, class_name1, class_name2, session_id, report_style=report_style)
+    task = generate_report_task.delay(file_path, class_name1, class_name2, session_id, report_style)
+    session[session_id]["task_id"] = task.id
+    
+    return jsonify({"status": "processing", "session_id": session_id})
 
-    if result["status"] == "error":
-        logging.error("Error during report generation.")
-        return jsonify(result), 400
-
-    report_path = result["report_path"]
-    session[session_id]["report_path"] = report_path
-
-    if os.path.isfile(report_path):
-        logging.info(f"Report generated and stored at: {report_path}")
-    else:
-        logging.error("Report file not found immediately after generation: %s", report_path)
-        logging.info("Listing contents of the directory for verification:")
-        logging.info(os.listdir(os.path.dirname(report_path)))
-        return jsonify({"status": "error", "message": "Report generation failed"}), 500
-
-    download_url = url_for('download_report', session_id=session_id)
-    return jsonify({"status": "success", "download_url": download_url})
-
-
+# Check progress of report generation
 @app.route('/progress/<session_id>')
 def check_progress(session_id):
-    progress_info = session.get(session_id, {"progress": 0, "status": "No progress data"})
-    return jsonify(progress_info)
+    task_id = session.get(session_id, {}).get("task_id")
+    task = celery.AsyncResult(task_id)
+    if task.state == "SUCCESS":
+        return jsonify({"progress": 100, "status": "completed", "download_url": url_for('download_report', session_id=session_id)})
+    elif task.state == "PENDING":
+        return jsonify({"progress": 0, "status": "pending"})
+    elif task.state == "PROGRESS":
+        return jsonify({"progress": task.info.get('progress', 0), "status": "in_progress"})
+    else:
+        return jsonify({"progress": 0, "status": "failed"})
 
+# Download the generated report
 @app.route('/download/<session_id>')
 def download_report(session_id):
     report_path = session.get(session_id, {}).get("report_path")

@@ -72,3 +72,5 @@ websocket-client==1.8.0
 Werkzeug==3.0.1
 yarl==1.17.1
 zipp==3.17.0
+celery==5.3.4
+redis==5.0.0
