@@ -5,16 +5,21 @@ from flask import Flask, render_template, request, redirect, url_for, send_file,
 from werkzeug.utils import secure_filename
 from data_processing import run_report_generation
 from models import db, User  # 引入数据库和用户模型
+from flask_sqlalchemy import SQLAlchemy
 
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Set a secret key for session management
 app.config['UPLOAD_FOLDER'] = 'uploads'  # Directory for file uploads
 app.config['GENERATED_REPORTS'] = 'generated_reports'  # Directory for generated reports
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///tmp/user.db')
 
+# Configure SQLAlchemy with PostgreSQL
+uri = os.getenv('DATABASE_URL')
+if uri and uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = uri
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)  # 初始化数据库
-
 
 # Ensure the upload and report folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
