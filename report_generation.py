@@ -493,7 +493,7 @@ def generate_word_report(
             f"以下为学生的成绩数据: 总人数为{stats['总人数']}，最高分为{stats['最高分']}，最低分为{stats['最低分']}，平均分为{stats['平均分']}。"
             f"各分数段的分布情况如下：{distribution_description}"
             "备注：生成的内容中要大幅减少转接词的使用（例如首先、其次、最后、综上所述、总的来说、此外、值得XX的是、XXXX的是）。"
-            "同时要保证生成的内容通俗易懂，不晦涩，不要用太书面化的词语。将内容控制在500字以内。"
+            "同时要保证生成的内容通俗易懂，不晦涩，不要用太书面化的词语。"
         )
         ai_result = call_with_messages(analysis_content, report_style)
 
@@ -536,13 +536,14 @@ def generate_word_report(
     # 调用 AI 接口生成学习成效分析
     learning_effectiveness_content = (
         "（然后从下面的方面进行分析："
+        f"请用 '{report_style}' 语言风格撰写报告分析。"
         "1、学习本课程之前学生的课程基础的掌握情况；"
         "2、学习本课程时，学生的学习态度情况（如提问情况、主动性）；"
         "3、课时安排对教学效果的影响；"
         "4、教学方式对教学效果的影响；"
         "5、教学内容对教学效果的影响。）"
         "请注意，分析内容不要过于细节，可以适当使用较为概括和笼统的语言。"
-        "将内容控制在500字以内。"
+        
     )
     ai_learning_effectiveness_result = call_with_messages(learning_effectiveness_content)
 
@@ -563,9 +564,10 @@ def generate_word_report(
 
     # 调用 AI 接口生成改进措施及建议
     suggestion_content = (
+        f"请用 '{report_style}' 语言风格撰写报告分析。"
         "请写出几条针对这个课程方方面面都可以的改进措施及建议。"
         "请注意，分析内容不要过于细节，可以适当使用较为概括和笼统的语言。"
-        "将内容控制在500字以内。"
+        
     )
     ai_suggestion_result = call_with_messages(suggestion_content)
 

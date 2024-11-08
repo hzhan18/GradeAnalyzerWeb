@@ -9,9 +9,9 @@ dashscope.api_key = "sk-95ddb5205f614d35aeb98c0ca4f2f8f2"
 def call_with_messages(content, report_style='formal'):
     # 根据 report_style 为内容添加不同风格的提示
     style_prompt = {
-        "formal": "请使用正式且专业的语言撰写报告内容。",
-        "concise": "请简洁明了地撰写报告内容，避免冗长。",
-        "detailed": "请提供详细且深入的分析报告内容。",
+        "formal": "使用详略得当的语言",
+        "concise": "用简明扼要的语言总结主要观点",
+        "detailed": "包含更多具体细节和数据支持",
     }
     
     # 获取用户选择的风格提示，默认为正式风格
