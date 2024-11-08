@@ -7,6 +7,8 @@ from data_processing import run_report_generation
 from models import db, User
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
+from report_generation import generate_report_task  # 确保任务导入正确
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -29,6 +31,7 @@ def make_celery(app):
         broker=os.getenv("REDISCLOUD_URL")
     )
     celery.conf.update(app.config)
+    celery.conf.imports = ["report_generation"]  # 添加 Celery 任务的导入路径
     return celery
 
 # Update the Celery configuration in app.py
@@ -52,10 +55,6 @@ logging.basicConfig(level=logging.INFO)
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@celery.task
-def generate_report_task(file_path, class_name1, class_name2, session_id, report_style):
-    return run_report_generation(file_path, class_name1, class_name2, session_id, report_style)
 
 # Process file upload and report generation
 @app.route('/process', methods=['POST'])
@@ -109,7 +108,6 @@ def download_report(session_id):
     else:
         logging.error("File not found at the specified path: %s", report_path)
         return "File not found", 404
-
 
 @app.route('/register', methods=['POST'])
 def register():

@@ -9,7 +9,12 @@ from docx.oxml.ns import qn  # For Chinese font settings
 from docx.enum.section import WD_SECTION
 from ai_interface import call_with_messages  # Ensure this module is available
 from flask import session
+from celery import shared_task
 
+@shared_task
+def generate_report_task(*args, **kwargs):
+    # 调用 generate_word_report 函数
+    return generate_word_report(*args, **kwargs)
 def set_paragraph_font(paragraph, size=10.5, name='SimSun'):
     """
     设置段落中所有Run对象的字体大小和字体名称。
