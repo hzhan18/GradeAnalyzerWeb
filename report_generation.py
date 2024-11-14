@@ -225,13 +225,6 @@ def generate_word_report(
     # 第二行：居中Times New Roman 10.5号字，内容是学期信息
     semester_paragraph = doc.add_paragraph()
     semester_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    semester_run = semester_paragraph.add_run(f'({semester_info})')
-    semester_run.font.size = Pt(10.5)
-    semester_run.font.name = 'Times New Roman'
-
-    # 第二行：居中Times New Roman 10.5号字，内容是学期信息
-    semester_paragraph = doc.add_paragraph()
-    semester_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     semester_run = semester_paragraph.add_run('('+semester_info+')')
     semester_run.font.size = Pt(10.5)
     semester_run.font.name = 'Times New Roman'
