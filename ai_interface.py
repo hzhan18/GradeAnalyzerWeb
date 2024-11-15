@@ -47,11 +47,22 @@ def call_with_messages(content, report_style='formal'):
     logging.info(f"生成的 prompt: {messages[0]['content']}")
     
     try:
+        # 根据风格调整模型参数
+        if report_style == "concise":
+            max_tokens = 200
+        elif report_style == "detailed":
+            max_tokens = 800
+        else:  # formal
+            max_tokens = 500
+
         response = dashscope.Generation.call(
             model="qwen-turbo",
             messages=messages,
             seed=random.randint(1, 10000),
-            result_format='message'
+            result_format='message',
+            max_tokens=max_tokens,
+            temperature=0.5,  # 控制生成内容的随机性
+            top_p=1
         )
         if response.status_code == HTTPStatus.OK:
             return response['output']['choices'][0]['message']['content']

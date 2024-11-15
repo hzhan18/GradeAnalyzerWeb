@@ -5,9 +5,9 @@ from matplotlib.ticker import MaxNLocator
 import os
 from matplotlib.font_manager import FontProperties
 
-# 设置中文字体的路径
-font_path = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
-my_font = FontProperties(fname=font_path)  # 加载指定路径的字体
+# Set font properties to support Chinese characters
+plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']  # Adjust as needed
+plt.rcParams['axes.unicode_minus'] = False  # Ensure minus signs display correctly
 
 def plot_distribution(distribution, title, file_path):
     """
@@ -28,15 +28,26 @@ def plot_distribution(distribution, title, file_path):
         scores = list(distribution.keys())
         counts = [d['人数'] for d in distribution.values()]
         
-        # Create the plot
-        plt.figure(figsize=(10, 6))
-        plt.bar(scores, counts, color='skyblue')
-        plt.xlabel("分数段", fontproperties=my_font)  # 设置X轴字体
-        plt.ylabel("人数", fontproperties=my_font)    # 设置Y轴字体
-        plt.title(title, fontproperties=my_font)     # 设置标题字体
-        plt.xticks(fontproperties=my_font)           # 设置X轴标签字体，确保分数段使用中文字体
-        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-        plt.grid(True)
+        if False:
+            # Create the plot
+            plt.figure(figsize=(10, 6))
+            plt.bar(scores, counts, color='skyblue')
+            plt.xlabel("分数段", fontproperties=my_font)  # 设置X轴字体
+            plt.ylabel("人数", fontproperties=my_font)    # 设置Y轴字体
+            plt.title(title, fontproperties=my_font)     # 设置标题字体
+            plt.xticks(fontproperties=my_font)           # 设置X轴标签字体，确保分数段使用中文字体
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.grid(True)
+        else:
+            # Create the plot
+            plt.figure(figsize=(10, 6))
+            plt.bar(scores, counts, color='skyblue')
+            plt.xlabel('分数段')
+            plt.ylabel('人数')
+            plt.title(title)
+            plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.grid(True)
+            
         
         # Ensure the directory exists
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
