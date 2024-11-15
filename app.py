@@ -30,7 +30,7 @@ def index():
 # Process file upload and report generation
 @app.route('/process', methods=['POST'])
 def process_file():
-    # Check if the file is in the request
+    # 检查文件
     if 'file' not in request.files:
         return redirect(url_for('index'))
 
@@ -38,44 +38,42 @@ def process_file():
     if file.filename == '':
         return redirect(url_for('index'))
 
-    # Save the uploaded file
+    # 保存文件
     filename = secure_filename(file.filename)
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
 
-    # Get class names from the form
+    # 获取表单数据
     class_name1 = request.form.get('class_name1', '')
     class_name2 = request.form.get('class_name2', '')
 
-    # 从 session 中获取用户选择的报告风格
-    report_style = session.get('report_style', 'formal')  # 默认为 'formal'
+    # 获取用户选择的报告风格
+    report_style = session.get('report_style', 'formal')
+    logging.info(f"生成报告时使用的风格: {report_style}")
 
-    # Generate a session ID to track progress
+    # 生成报告
     session_id = os.urandom(8).hex()
     session[session_id] = {"progress": 0, "status": "Initializing"}
 
-    # Run the report generation process, passing the report_style
-    result = run_report_generation(file_path, class_name1, class_name2, session_id, report_style=report_style)
+    result = run_report_generation(
+        file_path, class_name1, class_name2, session_id, report_style=report_style
+    )
 
-    # Error handling
     if result["status"] == "error":
         logging.error("Error during report generation.")
         return jsonify(result), 400
 
-    # Use the path directly from result to avoid adding "uploads" twice
     report_path = result["report_path"]
     session[session_id]["report_path"] = report_path
 
-    # Check if the file exists and list directory contents for debugging
     if os.path.isfile(report_path):
         logging.info(f"Report generated and stored at: {report_path}")
     else:
-        logging.error("Report file not found immediately after generation: %s", report_path)
-        logging.info("Listing contents of the directory for verification:")
-        logging.info(os.listdir(os.path.dirname(report_path)))
+        logging.error(f"Report file not found: {report_path}")
         return jsonify({"status": "error", "message": "Report generation failed"}), 500
 
     return jsonify({"status": "success", "session_id": session_id})
+
 
 
 # Check progress of report generation
@@ -142,10 +140,12 @@ def login():
         session['username'] = user.username
         session['email'] = user.email
         session['logged_in'] = True  # 标记用户已登录
+        session['report_style'] = user.report_style or 'formal'  # 从数据库加载风格或设置默认值
         # 返回 JSON 响应，不跳转页面
         return jsonify({"status": "success", "username": user.username, "email": user.email})
     else:
         return jsonify({"status": "fail", "message": "用户名或密码错误"}), 401
+
 
 @app.route('/save_style', methods=['POST'])
 def save_style():
@@ -155,11 +155,17 @@ def save_style():
 
     data = request.get_json()
     report_style = data.get('report_style')
-    logging.info(f"接收到的报告风格: {report_style}")
+    valid_styles = ['formal', 'concise', 'detailed']
+
+    if report_style not in valid_styles:
+        logging.warning(f"无效的报告风格: {report_style}")
+        return jsonify({"status": "fail", "message": "无效的报告风格"}), 400
+
+    session['report_style'] = report_style  # 更新会话中的报告风格
 
     user = User.query.get(session['user_id'])
     if user:
-        user.report_style = report_style  # 保存报告风格
+        user.report_style = report_style  # 保存到数据库
         db.session.commit()
         logging.info(f"报告风格已更新为: {user.report_style}")
         return jsonify({"status": "success", "message": "报告风格已保存"})
@@ -167,15 +173,18 @@ def save_style():
         logging.error("用户不存在，无法保存报告风格")
         return jsonify({"status": "fail", "message": "用户不存在"}), 404
 
+
 @app.route('/check_login')
 def check_login():
     if session.get('logged_in'):
         return jsonify({
             "logged_in": True,
             "username": session.get('username'),
-            "email": session.get('email')
+            "email": session.get('email'),
+            "report_style": session.get('report_style', 'formal')
         })
     return jsonify({"logged_in": False})
+
 
 
 
