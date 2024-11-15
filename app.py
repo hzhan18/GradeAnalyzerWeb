@@ -169,7 +169,13 @@ def save_style():
 
 @app.route('/check_login')
 def check_login():
-    return jsonify({"logged_in": session.get('logged_in', False)})
+    if session.get('logged_in'):
+        return jsonify({
+            "logged_in": True,
+            "username": session.get('username'),
+            "email": session.get('email')
+        })
+    return jsonify({"logged_in": False})
 
 
 

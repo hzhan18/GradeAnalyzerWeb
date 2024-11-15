@@ -352,49 +352,48 @@
         }
       });
 
-      // 表单提交事件 (使用AJAX)     
+      // 表单提交事件 (使用AJAX)
       document.getElementById("reportForm").onsubmit = async function (event) {
-          event.preventDefault(); // 阻止默认表单提交
-          // 隐藏“报告生成完成”和下载按钮部分
-          document.getElementById("download-section").style.display = "none";
-          document.getElementById("statusText").textContent = "等待中...";
+        event.preventDefault(); // 阻止默认表单提交
+        // 隐藏“报告生成完成”和下载按钮部分
+        document.getElementById("download-section").style.display = "none";
+        document.getElementById("statusText").textContent = "等待中...";
 
-          const formData = new FormData(this);
-          const progressBar = document.getElementById("progressBar");
-          const progressContainer = document.getElementById("progressContainer");
-          const statusText = document.getElementById("statusText");
+        const formData = new FormData(this);
+        const progressBar = document.getElementById("progressBar");
+        const progressContainer = document.getElementById("progressContainer");
+        const statusText = document.getElementById("statusText");
 
-          // 显示进度条
-          /* progressContainer.style.display = "block";*/
-          statusText.textContent = "报告生成大概需要30至60秒即可下载...";
+        // 显示进度条
+        /* progressContainer.style.display = "block";*/
+        statusText.textContent = "报告生成大概需要30至60秒即可下载...";
 
-          try {
-              // 发送请求到后端
-              const response = await fetch("/process", {
-                method: "POST",
-                body: formData,
-              });
+        try {
+          // 发送请求到后端
+          const response = await fetch("/process", {
+            method: "POST",
+            body: formData,
+          });
 
-              if (!response.ok) {
-                  // 如果响应状态码不是 2xx
-                  const errorResult = await response.json();
-                  throw new Error(errorResult.message || "未知错误");
-              }
-
-              const result = await response.json();
-
-              if (result.status === "success") {
-                  const session_id = result.session_id;
-                  checkProgress(session_id);
-              } else {
-                  throw new Error(result.message || "未知错误");
-              }
-          } catch (error) {
-              alert("文件处理失败: " + error.message);
-              statusText.textContent = "报告生成失败。";
+          if (!response.ok) {
+            // 如果响应状态码不是 2xx
+            const errorResult = await response.json();
+            throw new Error(errorResult.message || "未知错误");
           }
-      };
 
+          const result = await response.json();
+
+          if (result.status === "success") {
+            const session_id = result.session_id;
+            checkProgress(session_id);
+          } else {
+            throw new Error(result.message || "未知错误");
+          }
+        } catch (error) {
+          alert("文件处理失败: " + error.message);
+          statusText.textContent = "报告生成失败。";
+        }
+      };
 
       // 轮询检查生成进度
       async function checkProgress(session_id) {
@@ -530,20 +529,47 @@
         }
       };
       document.addEventListener("DOMContentLoaded", async function () {
-        const reportStyleSelect = document.getElementById("reportStyle");
-        const loginPrompt = document.getElementById("loginPrompt");
-
-        // 检查登录状态
         const response = await fetch("/check_login");
         const result = await response.json();
-        console.log("User logged in:", result.logged_in); // 添加日志输出
+
+        const loginButtons = document.getElementById("loginButtons");
+        const loginButton = loginButtons.children[0];
+        const registerButton = loginButtons.children[1];
 
         if (result.logged_in) {
-          // 用户已登录，启用文本风格选择器并隐藏提示
+          // 用户已登录
+          loginButton.textContent = "个人";
+          loginButton.dataset.bsTarget = "#userInfoModal";
+
+          registerButton.textContent = "登出";
+          registerButton.style.display = "inline-block";
+          registerButton.addEventListener("click", logout);
+
+          // 填充个人信息模态框
+          document.getElementById(
+            "userWelcome"
+          ).textContent = `欢迎, ${result.username}!`;
+          document.getElementById(
+            "userEmail"
+          ).textContent = `邮箱: ${result.email}`;
+
+          // 启用报告文本风格选择器并隐藏提示
+          const reportStyleSelect = document.getElementById("reportStyle");
+          const loginPrompt = document.getElementById("loginPrompt");
           reportStyleSelect.disabled = false;
           loginPrompt.style.display = "none";
         } else {
-          // 用户未登录，禁用文本风格选择器并显示提示
+          // 用户未登录，恢复默认按钮
+          loginButton.textContent = "登录";
+          loginButton.dataset.bsTarget = "#loginModal";
+
+          registerButton.textContent = "注册";
+          registerButton.style.display = "inline-block";
+          registerButton.removeEventListener("click", logout);
+
+          // 禁用报告文本风格选择器并显示提示
+          const reportStyleSelect = document.getElementById("reportStyle");
+          const loginPrompt = document.getElementById("loginPrompt");
           reportStyleSelect.disabled = true;
           loginPrompt.style.display = "block";
         }
@@ -593,18 +619,24 @@
       async function logout() {
         const response = await fetch("/logout", { method: "GET" });
         if (response.redirected) {
-          window.location.href = response.url;
+          window.location.href = response.url; // 重定向到主页
         } else {
+          // 如果没有重定向，则手动恢复默认按钮状态
           const loginButton =
             document.getElementById("loginButtons").children[0];
           loginButton.textContent = "登录";
-          loginButton.dataset.bsTarget = "#loginModal"; // 恢复登录模态框
+          loginButton.dataset.bsTarget = "#loginModal";
 
           const registerButton =
             document.getElementById("loginButtons").children[1];
           registerButton.textContent = "注册";
           registerButton.style.display = "inline-block";
           registerButton.removeEventListener("click", logout);
+
+          const reportStyleSelect = document.getElementById("reportStyle");
+          const loginPrompt = document.getElementById("loginPrompt");
+          reportStyleSelect.disabled = true;
+          loginPrompt.style.display = "block";
         }
       }
     </script>
