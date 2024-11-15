@@ -352,36 +352,49 @@
         }
       });
 
-      // 表单提交事件 (使用AJAX)
+      // 表单提交事件 (使用AJAX)     
       document.getElementById("reportForm").onsubmit = async function (event) {
-        event.preventDefault(); // 阻止默认表单提交
-        // 隐藏“报告生成完成”和下载按钮部分
-        document.getElementById("download-section").style.display = "none";
-        document.getElementById("statusText").textContent = "等待中...";
+          event.preventDefault(); // 阻止默认表单提交
+          // 隐藏“报告生成完成”和下载按钮部分
+          document.getElementById("download-section").style.display = "none";
+          document.getElementById("statusText").textContent = "等待中...";
 
-        const formData = new FormData(this);
-        const progressBar = document.getElementById("progressBar");
-        const progressContainer = document.getElementById("progressContainer");
-        const statusText = document.getElementById("statusText");
+          const formData = new FormData(this);
+          const progressBar = document.getElementById("progressBar");
+          const progressContainer = document.getElementById("progressContainer");
+          const statusText = document.getElementById("statusText");
 
-        // 显示进度条
-        /* progressContainer.style.display = "block";*/
-        statusText.textContent = "报告生成大概需要30至60秒即可下载...";
+          // 显示进度条
+          /* progressContainer.style.display = "block";*/
+          statusText.textContent = "报告生成大概需要30至60秒即可下载...";
 
-        // 发送请求到后端
-        const response = await fetch("{{ url_for('process_file') }}", {
-          method: "POST",
-          body: formData,
-        });
-        const result = await response.json();
+          try {
+              // 发送请求到后端
+              const response = await fetch("/process", {
+                method: "POST",
+                body: formData,
+              });
 
-        if (result.status === "success") {
-          const session_id = result.session_id;
-          checkProgress(session_id);
-        } else {
-          alert("文件处理失败: " + result.message);
-        }
+              if (!response.ok) {
+                  // 如果响应状态码不是 2xx
+                  const errorResult = await response.json();
+                  throw new Error(errorResult.message || "未知错误");
+              }
+
+              const result = await response.json();
+
+              if (result.status === "success") {
+                  const session_id = result.session_id;
+                  checkProgress(session_id);
+              } else {
+                  throw new Error(result.message || "未知错误");
+              }
+          } catch (error) {
+              alert("文件处理失败: " + error.message);
+              statusText.textContent = "报告生成失败。";
+          }
       };
+
 
       // 轮询检查生成进度
       async function checkProgress(session_id) {

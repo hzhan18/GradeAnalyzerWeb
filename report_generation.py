@@ -481,8 +481,7 @@ def generate_word_report(
             distribution_description += f"{range_key}: 人数 {values['人数']}, 占比 {values['占比']:.2f}%；"
 
         analysis_content = (
-            f"请用 '{report_style}' 语言风格撰写报告分析。"
-            f"你作为这门课的授课老师，正在写校方布置的课程总结报告，对该门课学生{score_type}的成绩做出简要的书面总结和分析(除非学生成绩数据比较特殊，否则请不要过多的展示各分数段的总结和过分的罗列数值，而是稍微宏观一些做出总结)。"
+            f"你作为这门课的授课老师，正在写校方布置的课程总结报告。对该门课学生{score_type}的成绩做出书面总结和分析"
             f"以下为学生的成绩数据: 总人数为{stats['总人数']}，最高分为{stats['最高分']}，最低分为{stats['最低分']}，平均分为{stats['平均分']}。"
             f"各分数段的分布情况如下：{distribution_description}"
             "备注：生成的内容中要大幅减少转接词的使用（例如首先、其次、最后、综上所述、总的来说、此外、值得XX的是、XXXX的是）。"
@@ -538,7 +537,7 @@ def generate_word_report(
         "请注意，分析内容不要过于细节，可以适当使用较为概括和笼统的语言。"
         
     )
-    ai_learning_effectiveness_result = call_with_messages(learning_effectiveness_content)
+    ai_learning_effectiveness_result = call_with_messages(learning_effectiveness_content, report_style)
 
     # 添加AI生成的学习成效分析
     cleaned_ai_learning_effectiveness_result = ai_learning_effectiveness_result.replace("#", "").replace("*", "")
@@ -562,7 +561,7 @@ def generate_word_report(
         "请注意，分析内容不要过于细节，可以适当使用较为概括和笼统的语言。"
         
     )
-    ai_suggestion_result = call_with_messages(suggestion_content)
+    ai_suggestion_result = call_with_messages(suggestion_content, report_style)
 
     # 添加AI生成的改进措施及建议
     cleaned_ai_suggestion_result = ai_suggestion_result.replace("#", "").replace("*", "")
